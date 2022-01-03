@@ -13,8 +13,10 @@
     </parent>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <spring-boot.version>2.6.2</spring-boot.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <start-class>com.amazonaws.serverless.sample.springboot2.Application</start-class>
     </properties>
 
     <dependencies>
@@ -22,6 +24,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-tomcat</artifactId>
@@ -33,6 +39,12 @@
             <groupId>com.amazonaws.serverless</groupId>
             <artifactId>aws-serverless-java-container-springboot2</artifactId>
             <version>[1.4,)</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.symphonia/lambda-logging -->
@@ -50,19 +62,60 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.8.1</version>
+                        <configuration>
+                            <source>11</source>
+                            <target>11</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.1.2</version>
+                    </plugin>
+                    <!-- <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <version>${spring-boot.version}</version>
+                    </plugin> -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
                         <version>3.2.4</version>
+                        <!-- <dependencies>
+                            <dependency>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-maven-plugin</artifactId>
+                                <version>${spring-boot.version}</version>
+                            </dependency>
+                        </dependencies> -->
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                         </configuration>
                         <executions>
                             <execution>
+                                <id>shading</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>shade</goal>
                                 </goals>
                                 <configuration>
+                                    <transformers>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>META-INF/spring.handlers</resource>
+                                        </transformer>
+                                        <transformer implementation="org.springframework.boot.maven.PropertiesMergingResourceTransformer">
+                                            <resource>META-INF/spring.factories</resource>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>META-INF/spring.schemas</resource>
+                                        </transformer>
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <mainClass>com.amazonaws.serverless.sample.springboot2.Application</mainClass>
+                                        </transformer>
+                                    </transformers>
                                     <artifactSet>
                                         <excludes>
                                             <exclude>org.apache.tomcat.embed:*</exclude>
@@ -126,6 +179,4 @@
             </build>
         </profile>
     </profiles>
-
-
 </project>
